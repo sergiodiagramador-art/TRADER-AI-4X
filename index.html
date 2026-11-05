@@ -1,128 +1,83 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1220">
-  <meta name="description" content="TRADER AI 4X — painel de análise técnica e simulação.">
-  <title>TRADER AI 4X</title>
-  <style>
-    :root{color-scheme:dark;--bg:#080e19;--panel:#101a2b;--panel2:#0d1727;--line:#22324a;--text:#edf3ff;--muted:#91a2bc;--cyan:#43d9e8;--green:#35d39a;--red:#ff667d;--gold:#f2c66d;--blue:#6e9cff}
-    *{box-sizing:border-box}body{margin:0;background:radial-gradient(1000px 500px at 80% -10%,#142b46 0%,transparent 65%),var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    button,input,select{font:inherit}button{cursor:pointer}.wrap{max-width:1200px;margin:auto;padding:22px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
-    .brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border:1px solid #2b5066;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#14344a,#101a2b);color:var(--cyan);font-weight:900;font-size:18px;box-shadow:0 0 25px #43d9e81c}
-    h1{font-size:20px;letter-spacing:.08em;margin:0}.sub{color:var(--muted);font-size:12px}.status{border:1px solid #6b5730;background:#2a2417;color:var(--gold);padding:7px 11px;border-radius:30px;font-size:11px;white-space:nowrap}
-    .topgrid{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:12px;margin-bottom:14px}.panel{background:linear-gradient(180deg,#111d30,#0d1727);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 12px 30px #0002}
-    .eyebrow{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.13em}.big{font-size:25px;font-weight:750;margin-top:5px}.muted{color:var(--muted)}.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
-    select,.btn,.field{background:#0b1422;color:var(--text);border:1px solid #2a3a53;border-radius:9px;padding:9px 11px;min-height:38px}.btn{transition:.15s}.btn:hover{border-color:var(--cyan);transform:translateY(-1px)}.btn.primary{background:#123746;border-color:#26758a;color:#baf8ff}.btn.active{border-color:var(--cyan);color:var(--cyan);background:#102b38}
-    .layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(270px,.85fr);gap:14px}.charthead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.charttitle{font-weight:700}.chartwrap{height:340px;position:relative;border:1px solid #1d2c42;border-radius:12px;background:linear-gradient(180deg,#0a1422,#0b1320);overflow:hidden}
-    canvas{width:100%;height:100%;display:block}.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin-top:10px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
-    .indicators{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:13px}.metric{padding:11px;border:1px solid #20314a;border-radius:11px;background:#0b1524}.metric b{display:block;font-size:17px;margin-top:3px}.metric small{color:var(--muted)}
-    .sectiontitle{font-size:13px;font-weight:750;margin:0 0 12px}.engine{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #203047}.engine:last-child{border:0}.pill{font-size:10px;padding:4px 7px;border-radius:20px;background:#202b3c;color:var(--muted)}.pill.wait{color:var(--gold);background:#302918}
-    .signal{margin-top:14px;padding:14px;border-radius:12px;background:#0a1422;border:1px solid #273950}.signal strong{display:block;font-size:17px;margin:4px 0}.notice{font-size:11px;color:var(--muted);margin-top:10px}
-    .lower{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.rowline{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #203047}.rowline:last-child{border:0}
-    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed #31445e;border-radius:10px}
-    footer{text-align:center;color:#72839c;font-size:11px;padding:22px 0 8px}
-    @media(max-width:850px){.topgrid{grid-template-columns:1fr 1fr}.topgrid .panel:first-child{grid-column:1/-1}.layout{grid-template-columns:1fr}.lower{grid-template-columns:1fr}}
-    @media(max-width:520px){.wrap{padding:14px}.topgrid{grid-template-columns:1fr 1fr}.panel{padding:13px}.big{font-size:21px}.chartwrap{height:270px}.indicators{grid-template-columns:repeat(2,1fr)}header{align-items:flex-start}.status{font-size:9px}}
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080e19">
+<meta name="description" content="TRADER AI 4X — análise técnica e backtest local com dados importados.">
+<title>TRADER AI 4X</title>
+<style>
+:root{color-scheme:dark;--bg:#080e19;--panel:#101a2b;--panel2:#0b1524;--line:#263750;--text:#edf3ff;--muted:#91a2bc;--cyan:#43d9e8;--green:#35d39a;--red:#ff667d;--gold:#f2c66d;--blue:#6e9cff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1000px 500px at 80% -10%,#142b46 0%,transparent 65%),var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}.wrap{max-width:1240px;margin:auto;padding:20px}header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border:1px solid #2b5066;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#14344a,#101a2b);color:var(--cyan);font-weight:900;font-size:18px}h1{font-size:20px;letter-spacing:.08em;margin:0}.sub{color:var(--muted);font-size:12px}.status{border:1px solid #6b5730;background:#2a2417;color:var(--gold);padding:7px 11px;border-radius:30px;font-size:11px}.status.ready{border-color:#236b55;background:#102b25;color:#8df0c7}.panel{background:linear-gradient(180deg,#111d30,#0d1727);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 12px 30px #0002}.topgrid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:12px;margin-bottom:14px}.eyebrow{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.13em}.big{font-size:24px;font-weight:750;margin-top:5px}.controls,.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}select,.btn,.field,input[type=number]{background:#0b1422;color:var(--text);border:1px solid #2a3a53;border-radius:9px;padding:9px 11px;min-height:38px}.btn{transition:.15s}.btn:hover{border-color:var(--cyan)}.btn.primary{background:#123746;border-color:#26758a;color:#baf8ff}.btn:disabled{opacity:.45;cursor:not-allowed}.layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(270px,.85fr);gap:14px}.charthead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.charttitle{font-weight:700}.chartwrap{height:340px;position:relative;border:1px solid #1d2c42;border-radius:12px;background:#0a1422;overflow:hidden}canvas{width:100%;height:100%;display:block}.legend{display:flex;gap:13px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin-top:9px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.indicators{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:13px}.metric{padding:10px;border:1px solid #20314a;border-radius:11px;background:#0b1524}.metric b{display:block;font-size:16px;margin-top:3px}.metric small{color:var(--muted)}.sectiontitle{font-size:13px;font-weight:750;margin:0 0 12px}.engine,.rowline{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #203047}.engine:last-child,.rowline:last-child{border:0}.pill{font-size:10px;padding:4px 7px;border-radius:20px;background:#202b3c;color:var(--muted);white-space:nowrap}.pill.up{color:#8df0c7;background:#12352d}.pill.down{color:#ff9cac;background:#3a1d29}.signal{margin-top:14px;padding:14px;border-radius:12px;background:#0a1422;border:1px solid #273950}.signal strong{display:block;font-size:18px;margin:4px 0}.notice{font-size:11px;color:var(--muted);margin-top:10px}.lower{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.stat{padding:10px;background:#0b1524;border:1px solid #20314a;border-radius:10px}.stat small{color:var(--muted)}.stat b{display:block;font-size:18px;margin-top:3px}.tablewrap{overflow:auto;max-height:260px;margin-top:10px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:8px;border-bottom:1px solid #203047;white-space:nowrap}th{color:var(--muted);position:sticky;top:0;background:#101a2b}.positive{color:var(--green)}.negative{color:var(--red)}.fieldrow{display:grid;grid-template-columns:1fr 120px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #203047}.fieldrow input,.fieldrow select{width:100%}.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed #31445e;border-radius:10px}.filelabel{display:inline-flex;align-items:center}.foot{text-align:center;color:#72839c;font-size:11px;padding:20px 0 8px}
+@media(max-width:850px){.topgrid{grid-template-columns:1fr 1fr}.topgrid .panel:first-child{grid-column:1/-1}.layout,.lower{grid-template-columns:1fr}}@media(max-width:520px){.wrap{padding:12px}.panel{padding:13px}.big{font-size:20px}.chartwrap{height:270px}.indicators{grid-template-columns:repeat(2,1fr)}header{align-items:flex-start}.status{font-size:9px}.fieldrow{grid-template-columns:1fr 105px}}
+</style>
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <div class="brand"><div class="logo">4X</div><div><h1>TRADER AI 4X</h1><div class="sub">CENTRAL DE ANÁLISE TÉCNICA</div></div></div>
-    <div class="status">● MODO DEMONSTRAÇÃO · SEM DADOS AO VIVO</div>
-  </header>
-
-  <section class="topgrid">
-    <div class="panel">
-      <div class="eyebrow">Mercado selecionado</div>
-      <div class="big">EUR / USD</div>
-      <div class="controls">
-        <select id="asset" aria-label="Ativo"><option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option><option>BTC/USD</option></select>
-        <select id="timeframe" aria-label="Período"><option value="1m">1 minuto</option><option value="5m" selected>5 minutos</option><option value="15m">15 minutos</option><option value="1h">1 hora</option></select>
-        <select id="candle" aria-label="Tipo de candle"><option value="normal">Candles tradicionais</option><option value="ha">Heikin Ashi (visual)</option></select>
-      </div>
-    </div>
-    <div class="panel"><div class="eyebrow">Status da conexão</div><div class="big" style="color:var(--gold)">Desconectado</div><div class="sub">Nenhuma corretora ou feed conectado</div></div>
-    <div class="panel"><div class="eyebrow">Modo operacional</div><div class="big" style="color:var(--cyan)">Simulação</div><div class="sub">Nenhuma ordem real será enviada</div></div>
-  </section>
-
-  <main class="layout">
-    <section class="panel">
-      <div class="charthead"><div><div class="charttitle">Gráfico de preços</div><div class="sub" id="chartSub">EUR/USD · 5 minutos · dados ilustrativos</div></div><button class="btn" id="refresh">↻ Atualizar visual</button></div>
-      <div class="chartwrap"><canvas id="chart" aria-label="Gráfico demonstrativo de candles"></canvas></div>
-      <div class="legend"><span><i class="dot" style="background:var(--green)"></i>Alta</span><span><i class="dot" style="background:var(--red)"></i>Baixa</span><span><i class="dot" style="background:var(--blue)"></i>MA 9 (ilustrativa)</span><span><i class="dot" style="background:var(--gold)"></i>MA 21 (ilustrativa)</span></div>
-      <div class="indicators">
-        <div class="metric"><small>RSI (14)</small><b>—</b></div><div class="metric"><small>CCI (20)</small><b>—</b></div><div class="metric"><small>MACD</small><b>—</b></div>
-        <div class="metric"><small>MA 9</small><b>—</b></div><div class="metric"><small>MA 21</small><b>—</b></div><div class="metric"><small>Bollinger</small><b>—</b></div>
-      </div>
-    </section>
-
-    <aside class="panel">
-      <h2 class="sectiontitle">4 motores de análise</h2>
-      <div class="engine"><div><b>Motor 1</b><div class="sub">Tendência · MA 9/21</div></div><span class="pill wait">Aguardando dados</span></div>
-      <div class="engine"><div><b>Motor 2</b><div class="sub">CCI · RSI · momentum</div></div><span class="pill wait">Aguardando dados</span></div>
-      <div class="engine"><div><b>Motor 3</b><div class="sub">MACD · Bollinger</div></div><span class="pill wait">Aguardando dados</span></div>
-      <div class="engine"><div><b>Motor 4</b><div class="sub">Confirmação combinada</div></div><span class="pill wait">Aguardando dados</span></div>
-      <div class="signal"><div class="eyebrow">Resultado da análise</div><strong style="color:var(--gold)">Sem sinal disponível</strong><div class="sub">Conecte uma fonte de cotações ou importe dados históricos para calcular indicadores reais.</div></div>
-      <div class="notice">O painel não inventa entradas. Um sinal só poderá ser calculado quando houver candles reais, completos e com horário válido.</div>
-    </aside>
-  </main>
-
-  <section class="lower">
-    <div class="panel">
-      <h2 class="sectiontitle">Backtest e desempenho</h2>
-      <div class="rowline"><span class="muted">Operações analisadas</span><b>—</b></div>
-      <div class="rowline"><span class="muted">Taxa de acerto</span><b>—</b></div>
-      <div class="rowline"><span class="muted">Resultado líquido</span><b>—</b></div>
-      <div class="rowline"><span class="muted">Drawdown máximo</span><b>—</b></div>
-      <div class="actions"><button class="btn primary" id="importBtn">Importar candles (CSV)</button><button class="btn" id="historyBtn">Ver histórico</button><input id="csvFile" type="file" accept=".csv,text/csv" hidden></div>
-      <div class="notice">Formato CSV esperado: time,open,high,low,close (volume opcional). O backtest será habilitado após validar os dados importados.</div>
-    </div>
-    <div class="panel">
-      <h2 class="sectiontitle">Gestão de risco · configuração</h2>
-      <div class="rowline"><label for="risk">Risco por operação</label><select id="risk"><option>0,5%</option><option selected>1%</option><option>2%</option></select></div>
-      <div class="rowline"><label for="stop">Limite de perda diário</label><select id="stop"><option>1%</option><option selected>2%</option><option>3%</option><option>5%</option></select></div>
-      <div class="rowline"><label for="martingale">Progressão</label><select id="martingale"><option selected>Desativada</option><option>Somente simulação</option></select></div>
-      <div class="notice">Configurações apenas demonstrativas nesta versão. Martingale aumenta a exposição e não garante recuperação de perdas.</div>
-      <div class="actions"><button class="btn primary" id="saveSettings">Salvar neste dispositivo</button><span class="sub" id="saveStatus" aria-live="polite"></span></div>
-    </div>
-  </section>
-  <footer>TRADER AI 4X · Versão inicial de interface · Não é recomendação financeira nem integração com corretora.</footer>
+<body><div class="wrap">
+<header><div class="brand"><div class="logo">4X</div><div><h1>TRADER AI 4X</h1><div class="sub">CENTRAL DE ANÁLISE TÉCNICA</div></div></div><div class="status" id="appStatus">● AGUARDANDO DADOS</div></header>
+<section class="topgrid">
+<div class="panel"><div class="eyebrow">Mercado selecionado</div><div class="big" id="marketLabel">EUR / USD</div><div class="controls"><select id="asset"><option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option><option>BTC/USD</option><option>PERSONALIZADO</option></select><select id="timeframe"><option value="1m">1 minuto</option><option value="5m" selected>5 minutos</option><option value="15m">15 minutos</option><option value="1h">1 hora</option></select><select id="candle"><option value="normal">Candles tradicionais</option><option value="ha">Heikin Ashi</option></select></div></div>
+<div class="panel"><div class="eyebrow">Dados de mercado</div><div class="big" id="dataStatus" style="color:var(--gold)">Sem dados</div><div class="sub" id="dataInfo">Importe um arquivo CSV para iniciar os cálculos</div></div>
+<div class="panel"><div class="eyebrow">Modo operacional</div><div class="big" style="color:var(--cyan)">Simulação</div><div class="sub">Nenhuma ordem real é enviada à corretora</div></div>
+</section>
+<main class="layout"><section class="panel">
+<div class="charthead"><div><div class="charttitle">Gráfico de preços</div><div class="sub" id="chartSub">Aguardando candles históricos</div></div><button class="btn" id="resetZoom">Ajustar gráfico</button></div>
+<div class="chartwrap"><canvas id="chart" aria-label="Gráfico de candles importados"></canvas></div>
+<div class="legend"><span><i class="dot" style="background:var(--green)"></i>Alta</span><span><i class="dot" style="background:var(--red)"></i>Baixa</span><span><i class="dot" style="background:var(--blue)"></i>MA 9</span><span><i class="dot" style="background:var(--gold)"></i>MA 21</span></div>
+<div class="indicators"><div class="metric"><small>RSI (14)</small><b id="rsiVal">—</b></div><div class="metric"><small>CCI (20)</small><b id="cciVal">—</b></div><div class="metric"><small>MACD</small><b id="macdVal">—</b></div><div class="metric"><small>MA 9</small><b id="ma9Val">—</b></div><div class="metric"><small>MA 21</small><b id="ma21Val">—</b></div><div class="metric"><small>Bollinger (20)</small><b id="bbVal">—</b></div></div>
+</section><aside class="panel"><h2 class="sectiontitle">4 motores de análise</h2>
+<div class="engine"><div><b>Motor 1</b><div class="sub">Tendência · MA 9/21</div></div><span class="pill" id="engine1">Sem dados</span></div>
+<div class="engine"><div><b>Motor 2</b><div class="sub">CCI · RSI · momentum</div></div><span class="pill" id="engine2">Sem dados</span></div>
+<div class="engine"><div><b>Motor 3</b><div class="sub">MACD · Bollinger</div></div><span class="pill" id="engine3">Sem dados</span></div>
+<div class="engine"><div><b>Motor 4</b><div class="sub">Confirmação combinada</div></div><span class="pill" id="engine4">Sem dados</span></div>
+<div class="signal"><div class="eyebrow">Resultado da análise</div><strong id="signalText" style="color:var(--gold)">Sem sinal disponível</strong><div class="sub" id="signalDetail">Importe candles completos para calcular a leitura técnica.</div></div>
+<div class="notice">O sinal é uma leitura técnica dos candles importados, não uma promessa de resultado. A entrada simulada do backtest ocorre na abertura do candle seguinte.</div>
+</aside></main>
+<section class="lower">
+<div class="panel"><h2 class="sectiontitle">Backtest com dados históricos</h2>
+<div class="fieldrow"><label for="expiry">Expiração (nº de candles)</label><input id="expiry" type="number" min="1" max="20" value="1"></div>
+<div class="fieldrow"><label for="payout">Retorno em caso de acerto (%)</label><input id="payout" type="number" min="1" max="100" value="85"></div>
+<div class="actions"><button class="btn primary" id="runBacktest" disabled>Executar backtest</button><button class="btn" id="clearBacktest">Limpar resultados</button></div>
+<div class="stats"><div class="stat"><small>Operações</small><b id="tradeCount">—</b></div><div class="stat"><small>Taxa de acerto</small><b id="winRate">—</b></div><div class="stat"><small>Resultado líquido</small><b id="netResult">—</b></div><div class="stat"><small>Drawdown máximo</small><b id="maxDD">—</b></div></div>
+<div class="actions"><button class="btn" id="exportTrades" disabled>Exportar operações CSV</button><button class="btn" id="historyBtn">Ver histórico salvo</button></div><div id="tradeTable" class="empty">Importe os candles e execute o backtest.</div>
+</div>
+<div class="panel"><h2 class="sectiontitle">Gestão de risco · configuração</h2>
+<div class="fieldrow"><label for="balance">Saldo inicial simulado</label><input id="balance" type="number" min="1" step="0.01" value="1000"></div>
+<div class="fieldrow"><label for="risk">Risco por operação (%)</label><select id="risk"><option value="0.5">0,5%</option><option value="1" selected>1%</option><option value="2">2%</option></select></div>
+<div class="fieldrow"><label for="stop">Limite de perda no backtest (%)</label><select id="stop"><option value="1">1%</option><option value="2" selected>2%</option><option value="3">3%</option><option value="5">5%</option></select></div>
+<div class="fieldrow"><label for="martingale">Progressão após perda</label><select id="martingale"><option value="off" selected>Desativada</option><option value="mg">Martingale 1 nível (simulação)</option></select></div>
+<div class="notice">A gestão de risco é simulada. Martingale aumenta o valor exposto e pode acelerar perdas. O limite de perda interrompe o backtest quando atingido.</div>
+<div class="actions"><button class="btn primary" id="saveSettings">Salvar configurações</button><span class="sub" id="saveStatus" aria-live="polite"></span></div>
+<div class="notice">Importação local: CSV com colunas time, open, high, low, close (volume opcional). Os dados permanecem neste dispositivo.</div>
+<div class="actions"><button class="btn" id="importBtn">Importar candles CSV</button><input id="csvFile" type="file" accept=".csv,text/csv" hidden><button class="btn" id="clearData">Remover dados importados</button></div><div class="sub" id="fileStatus">Nenhum arquivo carregado.</div>
+</div></section><footer class="foot">TRADER AI 4X · Módulo local de análise e backtest · Sem conexão com corretora ou execução de ordens reais.</footer>
 </div>
 <script>
-(() => {
-  const canvas = document.getElementById('chart');
-  const ctx = canvas.getContext('2d');
-  let seed = 20261105;
-  function rand(){ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; }
-  function draw(){
-    const box=canvas.getBoundingClientRect(), dpr=Math.max(1,window.devicePixelRatio||1);
-    canvas.width=Math.round(box.width*dpr); canvas.height=Math.round(box.height*dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    const w=box.width,h=box.height,p={l:48,r:14,t:16,b:24},cw=w-p.l-p.r,ch=h-p.t-p.b;
-    ctx.clearRect(0,0,w,h);
-    ctx.strokeStyle='#1c2b40';ctx.lineWidth=1;ctx.fillStyle='#8092ad';ctx.font='10px system-ui';
-    for(let i=0;i<=5;i++){let y=p.t+ch*i/5;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillText((1.0920-i*.0008).toFixed(4),5,y+3);}
-    let price=1.0901, data=[];
-    for(let i=0;i<46;i++){let o=price,c=o+(rand()-.48)*.0010,hi=Math.max(o,c)+rand()*.00035,lo=Math.min(o,c)-rand()*.00035;data.push({o,c,hi,lo});price=c;}
-    const min=Math.min(...data.map(x=>x.lo)),max=Math.max(...data.map(x=>x.hi));
-    const yy=v=>p.t+(max-v)/(max-min)*ch, step=cw/data.length;
-    data.forEach((d,i)=>{let x=p.l+i*step+step/2,up=d.c>=d.o,col=up?'#35d39a':'#ff667d';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x,yy(d.hi));ctx.lineTo(x,yy(d.lo));ctx.stroke();let top=yy(Math.max(d.o,d.c)),bottom=yy(Math.min(d.o,d.c));ctx.fillRect(x-step*.29,top,step*.58,Math.max(2,bottom-top));});
-    ctx.fillStyle='#7186a5';ctx.fillText('GRÁFICO ILUSTRATIVO — NÃO REPRESENTA COTAÇÕES REAIS',p.l+5,h-7);
-  }
-  document.getElementById('refresh').addEventListener('click',()=>{seed++;draw();});
-  document.getElementById('timeframe').addEventListener('change',e=>{document.getElementById('chartSub').textContent=document.getElementById('asset').value+' · '+e.target.options[e.target.selectedIndex].text+' · dados ilustrativos';});
-  document.getElementById('asset').addEventListener('change',e=>{document.getElementById('chartSub').textContent=e.target.value+' · '+document.getElementById('timeframe').selectedOptions[0].text+' · dados ilustrativos';});
-  document.getElementById('candle').addEventListener('change',e=>{document.getElementById('chartSub').textContent+=' · '+(e.target.value==='ha'?'Heikin Ashi visual':'candles tradicionais');});
-  document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('csvFile').click());
-  document.getElementById('csvFile').addEventListener('change',e=>{const f=e.target.files[0];if(f)alert('Arquivo selecionado: '+f.name+'. A validação e o cálculo do backtest serão implementados na próxima etapa.');});
-  document.getElementById('historyBtn').addEventListener('click',()=>alert('O histórico será exibido quando o módulo de simulação estiver implementado.'));
-  document.getElementById('saveSettings').addEventListener('click',()=>{const data={risk:document.getElementById('risk').value,stop:document.getElementById('stop').value,martingale:document.getElementById('martingale').value};try{localStorage.setItem('trader-ai-4x-settings',JSON.stringify(data));document.getElementById('saveStatus').textContent='Salvo neste dispositivo.';}catch(e){document.getElementById('saveStatus').textContent='Não foi possível salvar.';}});
-  window.addEventListener('resize',draw);draw();
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);let candles=[],results=[],lastAnalysis=null;
+const fmt=(v,d=5)=>Number.isFinite(v)?v.toFixed(d):'—';
+function sma(a,n){return a.map((_,i)=>i+1<n?null:a.slice(i-n+1,i+1).reduce((s,x)=>s+x,0)/n)}
+function ema(a,n){const k=2/(n+1),out=[];let e=null;a.forEach((v,i)=>{e=e===null?v:v*k+e*(1-k);out.push(i+1<n?null:e)});return out}
+function calcRSI(c,n=14){const out=Array(c.length).fill(null);let gains=0,loss=0;if(c.length<=n)return out;for(let i=1;i<=n;i++){let d=c[i]-c[i-1];gains+=Math.max(0,d);loss+=Math.max(0,-d)}let ag=gains/n,al=loss/n;out[n]=al===0?100:100-100/(1+ag/al);for(let i=n+1;i<c.length;i++){let d=c[i]-c[i-1];ag=(ag*(n-1)+Math.max(0,d))/n;al=(al*(n-1)+Math.max(0,-d))/n;out[i]=al===0?100:100-100/(1+ag/al)}return out}
+function calcCCI(data,n=20){return data.map((_,i)=>{if(i+1<n)return null;let slice=data.slice(i-n+1,i+1),tp=slice.map(x=>(x.high+x.low+x.close)/3),avg=tp.reduce((a,b)=>a+b,0)/n,md=tp.reduce((a,b)=>a+Math.abs(b-avg),0)/n;return md===0?0:(tp[tp.length-1]-avg)/(.015*md)})}
+function indicators(data){const c=data.map(x=>x.close),ma9=sma(c,9),ma21=sma(c,21),rsi=calcRSI(c),cci=calcCCI(data),e12=ema(c,12),e26=ema(c,26),macd=e12.map((v,i)=>v===null||e26[i]===null?null:v-e26[i]),sig=ema(macd.map(v=>v===null?0:v),9),bbMid=sma(c,20),bbUp=[],bbLow=[];c.forEach((v,i)=>{if(i<19){bbUp.push(null);bbLow.push(null)}else{let s=c.slice(i-19,i+1),m=bbMid[i],sd=Math.sqrt(s.reduce((a,x)=>a+(x-m)**2,0)/20);bbUp.push(m+2*sd);bbLow.push(m-2*sd)}});return{ma9,ma21,rsi,cci,macd,macdSignal:sig,bbMid,bbUp,bbLow}}
+function vote(data,ind,i){if(i<25)return null;let c=data[i].close,prev=data[i-1].close,up=0,down=0;const add=v=>{if(v>0)up++;else if(v<0)down++};add(ind.ma9[i]>ind.ma21[i]?1:-1);let r=ind.rsi[i],cc=ind.cci[i];add((r>50&&cc>0)?1:(r<50&&cc<0)?-1:0);let m=ind.macd[i]-ind.macdSignal[i];add(m>0?1:m<0?-1:0);let momentum=c>prev?1:c<prev?-1:0;let bb= c>ind.bbMid[i]?1:c<ind.bbMid[i]?-1:0;add(momentum+bb>0?1:momentum+bb<0?-1:0);return{up,down,direction:up>=3?'CALL':down>=3?'PUT':'NEUTRO'}}
+function setPill(id,label,kind){$(id).textContent=label;$(id).className='pill'+(kind?' '+kind:'')}
+function updateAnalysis(){if(candles.length<26){lastAnalysis=null;return}let ind=indicators(candles),i=candles.length-1,v=vote(candles,ind,i);lastAnalysis={ind,v};$('rsiVal').textContent=fmt(ind.rsi[i],1);$('cciVal').textContent=fmt(ind.cci[i],1);$('macdVal').textContent=fmt(ind.macd[i],6);$('ma9Val').textContent=fmt(ind.ma9[i]);$('ma21Val').textContent=fmt(ind.ma21[i]);$('bbVal').textContent=fmt(ind.bbLow[i])+' / '+fmt(ind.bbUp[i]);if(!v)return;[1,2,3,4].forEach((n)=>{let val=n===1?(ind.ma9[i]>ind.ma21[i]?'CALL':'PUT'):n===2?(ind.rsi[i]>50&&ind.cci[i]>0?'CALL':ind.rsi[i]<50&&ind.cci[i]<0?'PUT':'NEUTRO'):n===3?(ind.macd[i]>ind.macdSignal[i]?'CALL':'PUT'):v.direction;setPill('engine'+n,val,val==='CALL'?'up':val==='PUT'?'down':'')});let sig=v.direction;$('signalText').textContent=sig==='NEUTRO'?'SEM CONSENSO':sig;$('signalText').style.color=sig==='CALL'?'var(--green)':sig==='PUT'?'var(--red)':'var(--gold)';$('signalDetail').textContent='Consenso: '+v.up+' motores para CALL e '+v.down+' para PUT. Último fechamento: '+fmt(candles[i].close,5)+'.'}
+function draw(){const cv=$('chart'),ctx=cv.getContext('2d'),box=cv.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1);cv.width=Math.max(1,Math.round(box.width*dpr));cv.height=Math.max(1,Math.round(box.height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);let w=box.width,h=box.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#8092ad';ctx.font='11px system-ui';if(!candles.length){ctx.fillText('Importe candles históricos em CSV para visualizar o gráfico',18,h/2);return}let data=candles.slice(-90),ind=indicators(data),p={l:58,r:12,t:14,b:22},cw=w-p.l-p.r,ch=h-p.t-p.b,min=Math.min(...data.map(x=>x.low)),max=Math.max(...data.map(x=>x.high)),pad=(max-min)*.08||.0001;min-=pad;max+=pad;const yy=v=>p.t+(max-v)/(max-min)*ch,step=cw/data.length;ctx.strokeStyle='#1c2b40';ctx.fillStyle='#8092ad';for(let j=0;j<=4;j++){let val=max-(max-min)*j/4,y=yy(val);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillText(val.toFixed(5),3,y+3)}data.forEach((d,i)=>{let x=p.l+i*step+step/2,col=d.close>=d.open?'#35d39a':'#ff667d';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x,yy(d.high));ctx.lineTo(x,yy(d.low));ctx.stroke();let top=yy(Math.max(d.open,d.close)),bot=yy(Math.min(d.open,d.close));ctx.fillRect(x-step*.3,top,Math.max(1,step*.6),Math.max(1,bot-top))});function line(arr,color){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=1.5;let started=false;arr.forEach((v,i)=>{if(v===null||!Number.isFinite(v))return;let x=p.l+i*step+step/2,y=yy(v);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)});ctx.stroke()}line(ind.ma9,'#6e9cff');line(ind.ma21,'#f2c66d');}
+function parseCSV(text){let lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());if(lines.length<3)throw Error('O arquivo precisa ter cabeçalho e pelo menos dois candles.');let delim=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';const split=line=>line.split(delim).map(x=>x.trim().replace(/^"|"$/g,''));let headers=split(lines[0]).map(x=>x.toLowerCase().replace(/[\s_-]/g,''));let idx={};['time','open','high','low','close'].forEach(k=>{idx[k]=headers.findIndex(h=>h===k|| (k==='time'&&['date','datetime','timestamp'].includes(h)))});if(['open','high','low','close'].some(k=>idx[k]<0))throw Error('Cabeçalho inválido. Use time,open,high,low,close.');let out=[];for(let n=1;n<lines.length;n++){let a=split(lines[n]);let num=k=>Number(String(a[idx[k]]||'').replace(',','.'));let o={time:idx.time>=0?a[idx.time]:String(n),open:num('open'),high:num('high'),low:num('low'),close:num('close')};if(!Object.values([o.open,o.high,o.low,o.close]).every(Number.isFinite))continue;if(o.high<Math.max(o.open,o.close)||o.low>Math.min(o.open,o.close)||o.high<o.low)continue;out.push(o)}if(out.length<26)throw Error('Foram encontrados '+out.length+' candles válidos. São necessários pelo menos 26 para os indicadores.');return out}
+function runBacktest(){if(candles.length<30)return;let ind=indicators(candles),expiry=Math.max(1,Math.min(20,Number($('expiry').value)||1)),payout=Math.max(1,Math.min(100,Number($('payout').value)||85))/100,balance=Math.max(1,Number($('balance').value)||1000),start=balance,risk=Number($('risk').value)/100,stop=Number($('stop').value)/100,mg=$('martingale').value==='mg',peak=balance,maxDD=0,lossStreak=0,trades=[];let dayLoss=0;for(let i=25;i<candles.length-expiry-1;i++){let sig=vote(candles,ind,i);if(!sig||sig.direction==='NEUTRO')continue;let entry=candles[i+1].open,exit=candles[i+expiry].close;if(!Number.isFinite(entry)||!Number.isFinite(exit)||entry<=0)continue;let win=sig.direction==='CALL'?exit>entry:exit<entry;if(exit===entry)continue;let mult=mg&&lossStreak>0?2:1,stake=Math.min(balance,balance*risk*mult),profit=win?stake*payout:-stake;balance+=profit;dayLoss+=profit;lossStreak=win?0:lossStreak+1;peak=Math.max(peak,balance);maxDD=Math.max(maxDD,(peak-balance)/peak);trades.push({time:candles[i+1].time,direction:sig.direction,entry,exit,result:win?'WIN':'LOSS',stake,profit,balance});if(dayLoss<=-start*stop)break}results=trades;let wins=trades.filter(t=>t.result==='WIN').length,net=balance-start;$('tradeCount').textContent=trades.length;$('winRate').textContent=trades.length?(wins/trades.length*100).toFixed(1)+'%':'0%';$('netResult').textContent=(net>=0?'+':'')+net.toFixed(2);$('netResult').className=net>=0?'positive':'negative';$('maxDD').textContent=(maxDD*100).toFixed(2)+'%';$('exportTrades').disabled=!trades.length;renderTrades();saveHistory({date:new Date().toISOString(),asset:$('asset').value,timeframe:$('timeframe').value,trades:trades.length,wins,net,winRate:trades.length?wins/trades.length*100:0});}
+function renderTrades(){if(!results.length){$('tradeTable').className='empty';$('tradeTable').textContent='Nenhuma operação gerada com os critérios atuais.';return}let html='<div class="tablewrap"><table><thead><tr><th>Horário</th><th>Direção</th><th>Resultado</th><th>Valor</th><th>Saldo</th></tr></thead><tbody>';results.slice(-100).reverse().forEach(t=>{html+='<tr><td>'+esc(t.time)+'</td><td>'+t.direction+'</td><td class="'+(t.result==='WIN'?'positive':'negative')+'">'+t.result+'</td><td class="'+(t.profit>=0?'positive':'negative')+'">'+t.profit.toFixed(2)+'</td><td>'+t.balance.toFixed(2)+'</td></tr>'});$('tradeTable').className='';$('tradeTable').innerHTML=html+'</tbody></table></div>'}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function saveHistory(item){try{let h=JSON.parse(localStorage.getItem('trader4x-history')||'[]');h.unshift(item);localStorage.setItem('trader4x-history',JSON.stringify(h.slice(0,50)))}catch(e){}}
+function loadHistory(){try{let h=JSON.parse(localStorage.getItem('trader4x-history')||'[]');if(!h.length){alert('Ainda não há backtests salvos neste dispositivo.');return}alert(h.slice(0,10).map(x=>new Date(x.date).toLocaleString('pt-BR')+' · '+x.asset+' · '+x.trades+' operações · '+(x.net>=0?'+':'')+x.net.toFixed(2)).join('\n'))}catch(e){alert('Não foi possível ler o histórico salvo.')}} 
+function exportCSV(){if(!results.length)return;let rows=[['time','direction','entry','exit','result','stake','profit','balance'],...results.map(t=>[t.time,t.direction,t.entry,t.exit,t.result,t.stake,t.profit,t.balance])];let csv=rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='trader-ai-4x-backtest.csv';a.click();URL.revokeObjectURL(url)}
+function resetStats(){$('tradeCount').textContent='—';$('winRate').textContent='—';$('netResult').textContent='—';$('maxDD').textContent='—';$('tradeTable').className='empty';$('tradeTable').textContent='Importe os candles e execute o backtest.';$('exportTrades').disabled=true;results=[]}
+$('importBtn').onclick=()=>$('csvFile').click();$('csvFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let data=parseCSV(await f.text());candles=data;$('dataStatus').textContent=data.length+' candles';$('dataStatus').style.color='var(--green)';$('dataInfo').textContent='Arquivo: '+f.name;$('fileStatus').textContent='Carregado: '+f.name+' ('+data.length+' candles válidos)';$('appStatus').textContent='● DADOS CARREGADOS';$('appStatus').className='status ready';$('chartSub').textContent=$('asset').value+' · '+data.length+' candles importados';$('runBacktest').disabled=false;updateAnalysis();draw();resetStats()}catch(err){alert('Não foi possível importar: '+err.message)}e.target.value=''};
+$('runBacktest').onclick=runBacktest;$('clearBacktest').onclick=resetStats;$('exportTrades').onclick=exportCSV;$('historyBtn').onclick=loadHistory;$('resetZoom').onclick=draw;
+$('asset').onchange=()=>{$('marketLabel').textContent=$('asset').value.replace('/',' / ');if(candles.length){$('chartSub').textContent=$('asset').value+' · '+candles.length+' candles importados'}};
+$('timeframe').onchange=()=>{if(candles.length)$('chartSub').textContent=$('asset').value+' · '+$('timeframe').selectedOptions[0].text+' · '+candles.length+' candles'};
+$('candle').onchange=()=>{if(candles.length){let mode=$('candle').value;if(mode==='ha'){let prevO=candles[0].open,prevC=candles[0].close;let ha=candles.map((c,i)=>{let close=(c.open+c.high+c.low+c.close)/4,open=i===0?(c.open+c.close)/2:(prevO+prevC)/2;prevO=open;prevC=close;return{...c,open,close,high:Math.max(c.high,open,close),low:Math.min(c.low,open,close)}});let old=candles;candles=ha;draw();candles=old}else draw()}};
+$('saveSettings').onclick=()=>{let s={balance:$('balance').value,risk:$('risk').value,stop:$('stop').value,martingale:$('martingale').value,expiry:$('expiry').value,payout:$('payout').value};try{localStorage.setItem('trader4x-settings',JSON.stringify(s));$('saveStatus').textContent='Configurações salvas neste dispositivo.'}catch(e){$('saveStatus').textContent='Falha ao salvar.'}};
+try{let s=JSON.parse(localStorage.getItem('trader4x-settings')||'null');if(s)Object.keys(s).forEach(k=>{if($(k))$(k).value=s[k]})}catch(e){}
+window.addEventListener('resize',draw);draw();
 })();
-</script>
-</body>
-</html>
+</script></body></html>
