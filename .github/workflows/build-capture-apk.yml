@@ -1,6 +1,8 @@
 name: Build Android capture test
 
 on:
+  push:
+    branches: [android-capture-test]
   workflow_dispatch:
 
 jobs:
