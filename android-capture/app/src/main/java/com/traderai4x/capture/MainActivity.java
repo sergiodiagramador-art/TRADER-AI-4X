@@ -12,8 +12,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import java.io.File;
+import java.text.DateFormat;
+import java.util.Date;
 
 public class MainActivity extends Activity {
     private static final int REQUEST_CAPTURE = 41;
@@ -34,26 +38,33 @@ public class MainActivity extends Activity {
         layout.addView(title);
 
         status = new TextView(this);
-        status.setText("1. Autorize as notificações e a captura. 2. Abra a Bullex. 3. Aguarde o gráfico carregar. 4. Toque em Capturar agora na notificação.");
+        status.setText("1. Autorize a captura. 2. Abra a Bullex. 3. Espere o gráfico carregar. 4. Use Capturar agora na notificação do TRADER.");
         status.setPadding(0, 18, 0, 18);
         layout.addView(status);
 
         Button capture = new Button(this);
-        capture.setText("Autorizar captura");
+        capture.setText("Autorizar / iniciar captura");
         capture.setOnClickListener(v -> checkNotificationPermissionAndStart());
         layout.addView(capture);
+
+        Button refresh = new Button(this);
+        refresh.setText("Atualizar imagem");
+        refresh.setOnClickListener(v -> showLastCapture());
+        layout.addView(refresh);
 
         Button stop = new Button(this);
         stop.setText("Parar captura");
         stop.setOnClickListener(v -> {
             stopService(new Intent(this, CaptureService.class).setAction("STOP"));
-            status.setText("Captura parada.");
+            status.setText("Solicitação para parar enviada.");
         });
         layout.addView(stop);
 
         preview = new ImageView(this);
         preview.setAdjustViewBounds(true);
         preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        preview.setBackgroundColor(Color.rgb(235, 235, 235));
+        preview.setContentDescription("Prévia da última captura da tela");
         layout.addView(preview, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(layout);
         showLastCapture();
@@ -62,7 +73,7 @@ public class MainActivity extends Activity {
     private void checkNotificationPermissionAndStart() {
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            status.setText("Autorize as notificações na próxima janela para aparecer o botão Capturar agora.");
+            status.setText("Autorize as notificações do TRADER na próxima janela.");
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS);
             return;
         }
@@ -75,7 +86,7 @@ public class MainActivity extends Activity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startCaptureAuthorization();
             } else {
-                status.setText("A permissão de notificações foi negada. Ative as notificações do TRADER-AI-4X nas configurações do Android e tente novamente.");
+                status.setText("Notificações não autorizadas. Ative-as nas configurações do Android e tente novamente.");
             }
         }
     }
@@ -93,20 +104,31 @@ public class MainActivity extends Activity {
                 service.putExtra("resultCode", resultCode);
                 service.putExtra("projectionData", data);
                 startForegroundService(service);
-                status.setText("Captura autorizada. Abra a Bullex, espere o gráfico carregar e toque em Capturar agora na notificação.");
+                status.setText("Autorização recebida. Abra a Bullex, aguarde o gráfico carregar e toque em Capturar agora na notificação do TRADER.");
             } else {
-                status.setText("Permissão de captura não concedida.");
+                status.setText("A autorização de captura foi cancelada ou negada.");
             }
         }
     }
 
-    @Override protected void onResume() { super.onResume(); showLastCapture(); }
+    @Override protected void onResume() {
+        super.onResume();
+        showLastCapture();
+    }
 
     private void showLastCapture() {
-        File file = new File(getExternalFilesDir("captures"), "last-capture.png");
-        if (file.exists()) {
-            preview.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
-            status.setText("Última captura carregada. A próxima substituirá esta imagem.");
+        File base = getExternalFilesDir("captures");
+        File file = base == null ? null : new File(base, "last-capture.png");
+        if (file != null && file.exists() && file.length() > 0) {
+            Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+            if (bitmap != null) {
+                preview.setImageBitmap(bitmap);
+                String when = DateFormat.getDateTimeInstance().format(new Date(file.lastModified()));
+                status.setText("Captura encontrada: " + when + " • " + (file.length() / 1024) + " KB. Se acabou de capturar, esta é a imagem salva.");
+                return;
+            }
         }
+        preview.setImageDrawable(null);
+        status.setText("Nenhuma captura encontrada ainda. Autorize a captura, abra a Bullex, espere o gráfico carregar e toque em Capturar agora na notificação do TRADER. Depois volte aqui e toque em Atualizar imagem.");
     }
 }
