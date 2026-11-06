@@ -3,6 +3,7 @@ package com.traderai4x.capture;
 import android.app.*;
 import android.content.*;
 import android.graphics.Bitmap;
+import android.graphics.PixelFormat;
 import android.hardware.display.*;
 import android.media.*;
 import android.media.projection.*;
@@ -101,10 +102,12 @@ public class CaptureService extends Service {
     }
 
     private void stopCapture() {
+        if (finished && projection == null && virtualDisplay == null && imageReader == null) return;
+        finished = true;
         handler.removeCallbacksAndMessages(null);
         if (virtualDisplay != null) { virtualDisplay.release(); virtualDisplay = null; }
         if (imageReader != null) { imageReader.close(); imageReader = null; }
-        if (projection != null) { projection.stop(); projection = null; }
+        if (projection != null) { MediaProjection old = projection; projection = null; old.stop(); }
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
