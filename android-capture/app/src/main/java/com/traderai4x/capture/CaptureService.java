@@ -35,8 +35,8 @@ public class CaptureService extends Service {
         if (ACTION_CAPTURE.equals(action)) {
             if (projection != null && !captureStarted && !finished) {
                 captureStarted = true;
-                handler.postDelayed(this::takeOneScreenshot, 900);
-                updateNotification("Captura solicitada. Aguarde alguns segundos...");
+                handler.postDelayed(this::takeOneScreenshot, 5000);
+                updateNotification("Captura em 5 segundos. Feche o painel de notificações e deixe a Bullex na tela.");
             } else if (projection == null || finished) {
                 updateNotification("Sessão encerrada. Abra o TRADER e autorize uma nova captura.");
             }
