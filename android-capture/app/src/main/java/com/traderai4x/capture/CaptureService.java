@@ -16,22 +16,39 @@ import java.nio.ByteBuffer;
 
 public class CaptureService extends Service {
     private static final String CHANNEL = "capture_status";
+    private static final String ACTION_CAPTURE = "com.traderai4x.capture.CAPTURE";
+    private static final String ACTION_STOP = "STOP";
     private MediaProjection projection;
     private VirtualDisplay virtualDisplay;
     private ImageReader imageReader;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean finished = false;
+    private boolean captureStarted = false;
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && "STOP".equals(intent.getAction())) { stopCapture(); return START_NOT_STICKY; }
+        String action = intent == null ? null : intent.getAction();
+        if (ACTION_STOP.equals(action)) {
+            stopCapture();
+            return START_NOT_STICKY;
+        }
+        if (ACTION_CAPTURE.equals(action)) {
+            if (projection != null && !captureStarted && !finished) {
+                captureStarted = true;
+                handler.postDelayed(this::takeOneScreenshot, 1200);
+            }
+            return START_NOT_STICKY;
+        }
+
         createChannel();
         startForeground(404, buildNotification());
         int resultCode = intent == null ? 0 : intent.getIntExtra("resultCode", 0);
         Intent data = intent == null ? null : getProjectionData(intent);
-        if (data == null || resultCode == 0) { stopCapture(); return START_NOT_STICKY; }
+        if (data == null || resultCode == 0) {
+            stopCapture();
+            return START_NOT_STICKY;
+        }
         MediaProjectionManager manager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
         projection = manager.getMediaProjection(resultCode, data);
-        handler.postDelayed(this::takeOneScreenshot, 4000);
         return START_NOT_STICKY;
     }
 
@@ -71,26 +88,32 @@ public class CaptureService extends Service {
                 stopCapture();
             } catch (Exception e) {
                 stopCapture();
-            } finally { if (image != null) image.close(); }
+            } finally {
+                if (image != null) image.close();
+            }
         }, handler);
+
         projection.registerCallback(new MediaProjection.Callback() {
             @Override public void onStop() { stopCapture(); }
         }, handler);
         virtualDisplay = projection.createVirtualDisplay("TraderAI4XCapture", w, h, m.densityDpi,
             DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader.getSurface(), null, handler);
-        handler.postDelayed(() -> { if (!finished) stopCapture(); }, 2500);
+        handler.postDelayed(() -> { if (!finished) stopCapture(); }, 5000);
     }
 
     private Notification buildNotification() {
-        Intent stop = new Intent(this, CaptureService.class);
-        stop.setAction("STOP");
-        PendingIntent pending = PendingIntent.getService(this, 405, stop,
+        Intent capture = new Intent(this, CaptureService.class).setAction(ACTION_CAPTURE);
+        PendingIntent capturePending = PendingIntent.getService(this, 406, capture,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Intent stop = new Intent(this, CaptureService.class).setAction(ACTION_STOP);
+        PendingIntent stopPending = PendingIntent.getService(this, 405, stop,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         return new Notification.Builder(this, CHANNEL)
             .setContentTitle("TRADER-AI-4X")
-            .setContentText("Captura única em andamento")
+            .setContentText("Abra a Bullex e toque em Capturar agora quando o gráfico estiver pronto")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
-            .addAction(android.R.drawable.ic_media_pause, "Parar", pending)
+            .addAction(android.R.drawable.ic_menu_camera, "Capturar agora", capturePending)
+            .addAction(android.R.drawable.ic_media_pause, "Parar", stopPending)
             .setOngoing(true).build();
     }
 
@@ -111,6 +134,7 @@ public class CaptureService extends Service {
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
+
     @Override public void onDestroy() { stopCapture(); super.onDestroy(); }
     @Override public IBinder onBind(Intent intent) { return null; }
 }
