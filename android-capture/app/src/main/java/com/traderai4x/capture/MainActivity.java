@@ -1,7 +1,7 @@
 package com.traderai4x.capture;
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.Activity;\nimport android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         Button refresh = new Button(this);
         refresh.setText("Ver última imagem capturada");
         refresh.setOnClickListener(v -> showLastCapture());
-        layout.addView(refresh);
+        layout.addView(refresh);\n\n        Button analyze = new Button(this);\n        analyze.setText("Analisar última captura");\n        analyze.setOnClickListener(v -> analyzeLastCapture());\n        layout.addView(analyze);
 
         Button stop = new Button(this);
         stop.setText("Parar captura");
@@ -142,7 +142,7 @@ public class MainActivity extends Activity {
         showLastCapture();
     }
 
-    private void showLastCapture() {
+    private void analyzeLastCapture() {\n        File base = getExternalFilesDir("captures");\n        File file = base == null ? null : new File(base, "last-capture.png");\n        if (file == null || !file.exists() || file.length() == 0) {\n            status.setText("Ainda não existe captura salva para analisar.");\n            return;\n        }\n        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());\n        if (bitmap == null) {\n            status.setText("Não foi possível abrir a imagem salva.");\n            return;\n        }\n        String report = ScreenshotAnalyzer.analyze(bitmap);\n        bitmap.recycle();\n        new AlertDialog.Builder(this)\n            .setTitle("Análise da última captura")\n            .setMessage(report)\n            .setPositiveButton("OK", null)\n            .show();\n    }\n\n    private void showLastCapture() {
         File base = getExternalFilesDir("captures");
         File file = base == null ? null : new File(base, "last-capture.png");
         if (file != null && file.exists() && file.length() > 0) {
