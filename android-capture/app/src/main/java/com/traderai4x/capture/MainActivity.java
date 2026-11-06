@@ -6,6 +6,10 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.ContentValues;
+import android.provider.MediaStore;
+import java.io.OutputStream;
+import java.io.IOException;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Build;
@@ -66,6 +70,11 @@ public class MainActivity extends Activity {
         analyze.setText("Analisar última captura");
         analyze.setOnClickListener(v -> analyzeLastCapture());
         layout.addView(analyze);
+
+        Button export = new Button(this);
+        export.setText("Exportar imagem para compartilhar");
+        export.setOnClickListener(v -> exportLastCapture());
+        layout.addView(export);
 
         Button stop = new Button(this);
         stop.setText("Parar captura");
@@ -146,6 +155,50 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         showLastCapture();
+    }
+
+    private void exportLastCapture() {
+        File base = getExternalFilesDir("captures");
+        File file = base == null ? null : new File(base, "last-capture.png");
+        if (file == null || !file.exists() || file.length() == 0) {
+            status.setText("Não há captura salva para exportar.");
+            return;
+        }
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+        if (bitmap == null) {
+            status.setText("Não foi possível abrir a captura para exportar.");
+            return;
+        }
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, "Bullex-captura-" + System.currentTimeMillis() + ".png");
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+        values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/TRADER-AI-4X");
+        values.put(MediaStore.Images.Media.IS_PENDING, 1);
+        Uri uri = null;
+        try {
+            uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) throw new IOException("Não foi possível criar o arquivo na galeria.");
+            try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                if (out == null || !bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)) {
+                    throw new IOException("Falha ao gravar a imagem.");
+                }
+                out.flush();
+            }
+            ContentValues done = new ContentValues();
+            done.put(MediaStore.Images.Media.IS_PENDING, 0);
+            getContentResolver().update(uri, done, null, null);
+            status.setText("Imagem exportada para Galeria > Pictures > TRADER-AI-4X.");
+            new AlertDialog.Builder(this)
+                .setTitle("Captura exportada")
+                .setMessage("A imagem foi salva na galeria, na pasta Pictures/TRADER-AI-4X. Anexe essa imagem nesta conversa para calibrarmos a leitura dos candles.")
+                .setPositiveButton("OK", null)
+                .show();
+        } catch (Exception e) {
+            if (uri != null) getContentResolver().delete(uri, null, null);
+            status.setText("Falha ao exportar: " + e.getMessage());
+        } finally {
+            bitmap.recycle();
+        }
     }
 
     private void analyzeLastCapture() {
