@@ -2,11 +2,14 @@ package com.traderai4x.capture;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.projection.MediaProjectionManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -38,17 +41,23 @@ public class MainActivity extends Activity {
         layout.addView(title);
 
         status = new TextView(this);
-        status.setText("1. Autorize a captura. 2. Abra a Bullex. 3. Espere o gráfico carregar. 4. Use Capturar agora na notificação do TRADER.");
+        status.setText("PASSO 1: toque em Iniciar. PASSO 2: autorize a gravação da tela. PASSO 3: abra a Bullex. PASSO 4: abra o painel de notificações e toque em CAPTURAR AGORA na notificação TRADER-AI-4X.");
+        status.setTextSize(15);
         status.setPadding(0, 18, 0, 18);
         layout.addView(status);
 
         Button capture = new Button(this);
-        capture.setText("Autorizar / iniciar captura");
+        capture.setText("Iniciar captura");
         capture.setOnClickListener(v -> checkNotificationPermissionAndStart());
         layout.addView(capture);
 
+        Button settings = new Button(this);
+        settings.setText("Verificar / liberar notificações");
+        settings.setOnClickListener(v -> openNotificationSettings());
+        layout.addView(settings);
+
         Button refresh = new Button(this);
-        refresh.setText("Atualizar imagem");
+        refresh.setText("Ver última imagem capturada");
         refresh.setOnClickListener(v -> showLastCapture());
         layout.addView(refresh);
 
@@ -56,7 +65,7 @@ public class MainActivity extends Activity {
         stop.setText("Parar captura");
         stop.setOnClickListener(v -> {
             stopService(new Intent(this, CaptureService.class).setAction("STOP"));
-            status.setText("Solicitação para parar enviada.");
+            status.setText("Comando de parada enviado.");
         });
         layout.addView(stop);
 
@@ -73,20 +82,36 @@ public class MainActivity extends Activity {
     private void checkNotificationPermissionAndStart() {
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            status.setText("Autorize as notificações do TRADER na próxima janela.");
+            status.setText("O Android precisa permitir as notificações para mostrar o botão CAPTURAR AGORA. Autorize na próxima janela.");
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS);
             return;
         }
+        if (!notificationsEnabled()) {
+            status.setText("As notificações do TRADER estão bloqueadas. Toque em VERIFICAR / LIBERAR NOTIFICAÇÕES, permita-as e depois toque em INICIAR novamente.");
+            openNotificationSettings();
+            return;
+        }
         startCaptureAuthorization();
+    }
+
+    private boolean notificationsEnabled() {
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        return nm != null && nm.areNotificationsEnabled();
+    }
+
+    private void openNotificationSettings() {
+        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+        intent.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+        startActivity(intent);
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_NOTIFICATIONS) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startCaptureAuthorization();
+                status.setText("Notificações liberadas. Toque em INICIAR CAPTURA novamente.");
             } else {
-                status.setText("Notificações não autorizadas. Ative-as nas configurações do Android e tente novamente.");
+                status.setText("Notificações negadas. Sem elas, o botão CAPTURAR AGORA não poderá aparecer. Libere nas configurações.");
             }
         }
     }
@@ -103,10 +128,11 @@ public class MainActivity extends Activity {
                 Intent service = new Intent(this, CaptureService.class);
                 service.putExtra("resultCode", resultCode);
                 service.putExtra("projectionData", data);
-                startForegroundService(service);
-                status.setText("Autorização recebida. Abra a Bullex, aguarde o gráfico carregar e toque em Capturar agora na notificação do TRADER.");
+                if (Build.VERSION.SDK_INT >= 26) startForegroundService(service);
+                else startService(service);
+                status.setText("CAPTURA AUTORIZADA. Agora minimize o TRADER, abra a Bullex e puxe a barra superior do Android para baixo. Na notificação TRADER-AI-4X, toque em CAPTURAR AGORA. Depois volte e toque em VER ÚLTIMA IMAGEM CAPTURADA.");
             } else {
-                status.setText("A autorização de captura foi cancelada ou negada.");
+                status.setText("A autorização de captura foi cancelada ou negada. Toque em INICIAR CAPTURA e autorize.");
             }
         }
     }
@@ -124,11 +150,11 @@ public class MainActivity extends Activity {
             if (bitmap != null) {
                 preview.setImageBitmap(bitmap);
                 String when = DateFormat.getDateTimeInstance().format(new Date(file.lastModified()));
-                status.setText("Captura encontrada: " + when + " • " + (file.length() / 1024) + " KB. Se acabou de capturar, esta é a imagem salva.");
+                status.setText("CAPTURA SALVA: " + when + " • " + (file.length() / 1024) + " KB.");
                 return;
             }
         }
         preview.setImageDrawable(null);
-        status.setText("Nenhuma captura encontrada ainda. Autorize a captura, abra a Bullex, espere o gráfico carregar e toque em Capturar agora na notificação do TRADER. Depois volte aqui e toque em Atualizar imagem.");
+        status.setText("AINDA NÃO HÁ IMAGEM SALVA. Depois de autorizar, abra a Bullex, puxe a barra superior do Android e toque em CAPTURAR AGORA na notificação TRADER-AI-4X. Se a notificação não aparecer, use VERIFICAR / LIBERAR NOTIFICAÇÕES.");
     }
 }
