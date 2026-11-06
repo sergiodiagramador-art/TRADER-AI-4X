@@ -23,28 +23,33 @@ public class MainActivity extends Activity {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(24, 24, 24, 24);
         layout.setGravity(Gravity.CENTER_HORIZONTAL);
+
         TextView title = new TextView(this);
-        title.setText("TRADER-AI-4X — teste de captura");
+        title.setText("TRADER-AI-4X — captura de tela");
         title.setTextSize(20);
         layout.addView(title);
+
         status = new TextView(this);
-        status.setText("A imagem fica no espaço privado do app, sem ocupar a galeria.");
+        status.setText("1. Autorize a captura. 2. Abra a Bullex. 3. Aguarde o gráfico carregar. 4. Toque em Capturar agora na notificação.");
         status.setPadding(0, 18, 0, 18);
         layout.addView(status);
+
         Button capture = new Button(this);
-        capture.setText("Capturar tela");
+        capture.setText("Autorizar captura");
         capture.setOnClickListener(v -> {
             MediaProjectionManager manager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
             startActivityForResult(manager.createScreenCaptureIntent(), REQUEST_CAPTURE);
         });
         layout.addView(capture);
+
         Button stop = new Button(this);
         stop.setText("Parar captura");
         stop.setOnClickListener(v -> {
-            stopService(new Intent(this, CaptureService.class));
+            stopService(new Intent(this, CaptureService.class).setAction("STOP"));
             status.setText("Captura parada.");
         });
         layout.addView(stop);
+
         preview = new ImageView(this);
         preview.setAdjustViewBounds(true);
         preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -61,8 +66,10 @@ public class MainActivity extends Activity {
                 service.putExtra("resultCode", resultCode);
                 service.putExtra("projectionData", data);
                 startForegroundService(service);
-                status.setText("Autorizado. Mude para o Bullex; a captura será feita em 4 segundos.");
-            } else status.setText("Permissão não concedida.");
+                status.setText("Captura autorizada. Abra a Bullex, espere o gráfico carregar e toque em Capturar agora na notificação.");
+            } else {
+                status.setText("Permissão não concedida.");
+            }
         }
     }
 
