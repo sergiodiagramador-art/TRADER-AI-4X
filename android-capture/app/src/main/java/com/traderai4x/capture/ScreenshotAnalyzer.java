@@ -26,10 +26,6 @@ public final class ScreenshotAnalyzer {
         }
 
         int w = bitmap.getWidth(), h = bitmap.getHeight();
-
-        // Exclui os botões de operação à direita e os ícones laterais.
-        // A altura do gráfico muda entre captura da tela inteira e imagem recortada,
-        // portanto a faixa vertical é detectada pela distribuição de pixels coloridos.
         int left = (int) (w * 0.12);
         int right = (int) (w * 0.84);
         int scanTop = (int) (h * 0.04);
@@ -37,6 +33,7 @@ public final class ScreenshotAnalyzer {
         int width = right - left;
         int[] rowHits = new int[scanBottom - scanTop];
 
+        // Localiza automaticamente o gráfico em captura integral ou recortada.
         for (int y = scanTop; y < scanBottom; y++) {
             int hits = 0;
             for (int x = left; x < right; x++) {
@@ -47,10 +44,8 @@ public final class ScreenshotAnalyzer {
 
         int rowThreshold = Math.max(3, (int) (width * 0.004));
         int bestStart = -1, bestEnd = -1;
-        long bestScore = 0;
+        long bestScore = 0, runScore = 0;
         int runStart = -1, lastActive = -1;
-        long runScore = 0;
-
         for (int i = 0; i < rowHits.length; i++) {
             if (rowHits[i] >= rowThreshold) {
                 if (runStart < 0) { runStart = i; runScore = 0; }
@@ -58,17 +53,13 @@ public final class ScreenshotAnalyzer {
                 lastActive = i;
             } else if (runStart >= 0 && i - lastActive > 12) {
                 if (runScore > bestScore) {
-                    bestScore = runScore;
-                    bestStart = runStart;
-                    bestEnd = lastActive;
+                    bestScore = runScore; bestStart = runStart; bestEnd = lastActive;
                 }
                 runStart = -1;
             }
         }
         if (runStart >= 0 && runScore > bestScore) {
-            bestScore = runScore;
-            bestStart = runStart;
-            bestEnd = lastActive;
+            bestScore = runScore; bestStart = runStart; bestEnd = lastActive;
         }
         if (bestStart < 0 || bestEnd - bestStart < 25) {
             return inconclusive("Não foi possível localizar uma área contínua de candles coloridos.");
@@ -77,6 +68,7 @@ public final class ScreenshotAnalyzer {
         int pad = Math.max(6, (bestEnd - bestStart) / 12);
         int top = Math.max(scanTop, scanTop + bestStart - pad);
         int bottom = Math.min(scanBottom, scanTop + bestEnd + pad);
+        int chartHeight = bottom - top;
         int[] green = new int[width], red = new int[width];
         int[] minY = new int[width], maxY = new int[width];
         for (int i = 0; i < width; i++) {
@@ -108,12 +100,10 @@ public final class ScreenshotAnalyzer {
             int start = x, end = x, gap = 0;
             while (end + 1 < width) {
                 if (green[end + 1] + red[end + 1] >= 2) {
-                    end++;
-                    gap = 0;
+                    end++; gap = 0;
                 } else if (gap == 0 && end + 2 < width
                         && green[end + 2] + red[end + 2] >= 2) {
-                    end += 2;
-                    gap = 1;
+                    end += 2; gap = 1;
                 } else break;
             }
 
@@ -125,7 +115,11 @@ public final class ScreenshotAnalyzer {
                     candleBottom = Math.max(candleBottom, maxY[col]);
                 }
             }
-            if (gp + rp >= 4 && candleBottom > candleTop && end - start <= 18) {
+            int candleHeight = candleBottom - candleTop;
+            // Remove linhas verticais da interface (ex.: linha pontilhada de expiração),
+            // que atravessam quase toda a área do gráfico e não são candles.
+            if (gp + rp >= 4 && candleHeight > 1 && candleHeight <= chartHeight * 0.65
+                    && end - start <= 18) {
                 marks.add(new CandleMark(left + start, left + end,
                     candleTop, candleBottom, gp, rp));
             }
@@ -134,7 +128,7 @@ public final class ScreenshotAnalyzer {
 
         if (marks.size() < 5) {
             return "LEITURA INCONCLUSIVA\n"
-                + "Área colorida localizada: Y=" + top + "–" + bottom + " px\n"
+                + "Área do gráfico localizada: Y=" + top + "–" + bottom + " px\n"
                 + "Possíveis candles separados: " + marks.size() + "\n"
                 + "Ajuste visual ainda necessário.\n\nSINAL: SEM ENTRADA.";
         }
