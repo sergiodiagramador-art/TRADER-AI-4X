@@ -24,6 +24,8 @@ jobs:
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+      - name: Run unit tests
+        run: gradle -p android-capture :app:testDebugUnitTest
       - name: Build debug APK
         run: gradle -p android-capture :app:assembleDebug
       - name: Upload APK
