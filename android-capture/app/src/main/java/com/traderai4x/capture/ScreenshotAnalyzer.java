@@ -3,28 +3,31 @@ package com.traderai4x.capture;
 import android.graphics.Bitmap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
- * Extrator experimental de candles a partir de uma captura da BullX.
- * Os valores são coordenadas de pixels, não preços reais. Nenhum sinal
- * operacional é liberado até a calibração visual ser validada.
+ * Detector experimental de candles na captura da BullX.
+ * Ainda não converte pixels em preços OHLC; por segurança não calcula
+ * indicadores operacionais nem emite recomendações de compra/venda.
  */
 public final class ScreenshotAnalyzer {
     private ScreenshotAnalyzer() {}
 
-    private static final class Candle {
-        final double high;
-        final double low;
-        final double close;
-        final boolean green;
-        Candle(double high, double low, double close, boolean green) {
-            this.high = high;
-            this.low = low;
-            this.close = close;
+    private static final class CandleMark {
+        final int firstX;
+        final int lastX;
+        final int topY;
+        final int bottomY;
+        final int green;
+        final int red;
+        CandleMark(int firstX, int lastX, int topY, int bottomY, int green, int red) {
+            this.firstX = firstX;
+            this.lastX = lastX;
+            this.topY = topY;
+            this.bottomY = bottomY;
             this.green = green;
+            this.red = red;
         }
-        double typical() { return (high + low + close) / 3.0; }
+        String color() { return green >= red ? "VERDE" : "VERMELHO"; }
     }
 
     public static String analyze(Bitmap bitmap) {
@@ -35,151 +38,107 @@ public final class ScreenshotAnalyzer {
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
 
-        // Região do gráfico observada nas capturas atuais da BullX.
-        // Exclui a coluna de botões ACIMA/ABAIXO à direita.
-        int left = (int) (w * 0.07);
+        // Na captura real enviada pelo usuário, o gráfico ocupa aproximadamente
+        // 45% a 61% da altura total. A faixa abaixo era incorreta e pegava a
+        // área cinza inferior do aplicativo.
+        int left = (int) (w * 0.08);
         int right = (int) (w * 0.84);
-        int top = (int) (h * 0.58);
-        int bottom = (int) (h * 0.81);
-        if (right <= left || bottom <= top) return inconclusive("Área do gráfico não identificada.");
+        int top = (int) (h * 0.45);
+        int bottom = (int) (h * 0.61);
+        if (right <= left || bottom <= top) return inconclusive("Área do gráfico inválida.");
 
-        int[] greenCount = new int[right - left];
-        int[] redCount = new int[right - left];
-        int[] minY = new int[right - left];
-        int[] maxY = new int[right - left];
-        for (int i = 0; i < minY.length; i++) {
+        int width = right - left;
+        int[] green = new int[width];
+        int[] red = new int[width];
+        int[] minY = new int[width];
+        int[] maxY = new int[width];
+        for (int i = 0; i < width; i++) {
             minY[i] = Integer.MAX_VALUE;
             maxY[i] = -1;
         }
 
-        // Detecta pixels de corpo/pavio por coluna.
-        for (int x = left; x < right; x++) {
-            int idx = x - left;
-            for (int y = top; y < bottom; y++) {
-                int c = bitmap.getPixel(x, y);
+        for (int px = left; px < right; px++) {
+            int idx = px - left;
+            for (int py = top; py < bottom; py++) {
+                int c = bitmap.getPixel(px, py);
                 int r = (c >> 16) & 255;
                 int g = (c >> 8) & 255;
                 int b = c & 255;
-                boolean green = g > 105 && g > r * 1.30 && g > b * 1.12;
-                boolean red = r > 135 && r > g * 1.30 && r > b * 1.15;
-                if (green || red) {
-                    if (green) greenCount[idx]++;
-                    else redCount[idx]++;
-                    minY[idx] = Math.min(minY[idx], y);
-                    maxY[idx] = Math.max(maxY[idx], y);
+                boolean isGreen = g > 105 && g > r * 1.30 && g > b * 1.12;
+                boolean isRed = r > 135 && r > g * 1.30 && r > b * 1.15;
+                if (isGreen || isRed) {
+                    if (isGreen) green[idx]++;
+                    else red[idx]++;
+                    minY[idx] = Math.min(minY[idx], py);
+                    maxY[idx] = Math.max(maxY[idx], py);
                 }
             }
         }
 
-        List<Candle> candles = new ArrayList<>();
+        List<CandleMark> marks = new ArrayList<>();
         int x = 0;
-        while (x < greenCount.length) {
-            int count = greenCount[x] + redCount[x];
-            if (count < 2) { x++; continue; }
-
+        while (x < width) {
+            if (green[x] + red[x] == 0) { x++; continue; }
             int start = x;
             int end = x;
             int gap = 0;
-            while (end + 1 < greenCount.length) {
-                int next = greenCount[end + 1] + redCount[end + 1];
-                if (next >= 2) {
+            while (end + 1 < width) {
+                if (green[end + 1] + red[end + 1] > 0) {
                     end++;
                     gap = 0;
-                } else if (gap < 1 && end + 2 < greenCount.length
-                        && greenCount[end + 2] + redCount[end + 2] >= 2) {
+                } else if (gap == 0 && end + 2 < width
+                        && green[end + 2] + red[end + 2] > 0) {
                     end += 2;
-                    gap++;
-                } else break;
+                    gap = 1;
+                } else {
+                    break;
+                }
             }
 
-            int greens = 0, reds = 0, candleTop = Integer.MAX_VALUE, candleBottom = -1;
+            int greenPixels = 0;
+            int redPixels = 0;
+            int candleTop = Integer.MAX_VALUE;
+            int candleBottom = -1;
             for (int col = start; col <= end; col++) {
-                greens += greenCount[col];
-                reds += redCount[col];
-                if (greenCount[col] + redCount[col] > 0) {
+                greenPixels += green[col];
+                redPixels += red[col];
+                if (green[col] + red[col] > 0) {
                     candleTop = Math.min(candleTop, minY[col]);
                     candleBottom = Math.max(candleBottom, maxY[col]);
                 }
             }
-            if (candleTop < candleBottom && greens + reds >= 4) {
-                boolean isGreen = greens >= reds;
-                // Para candle verde, fechamento fica na extremidade superior;
-                // para candle vermelho, na extremidade inferior.
-                double high = -candleTop;
-                double low = -candleBottom;
-                double close = isGreen ? high : low;
-                candles.add(new Candle(high, low, close, isGreen));
+            if (greenPixels + redPixels >= 3 && candleBottom > candleTop) {
+                marks.add(new CandleMark(left + start, left + end, candleTop,
+                    candleBottom, greenPixels, redPixels));
             }
             x = Math.max(x + 1, end + 1);
         }
 
-        if (candles.size() < 22) {
+        if (marks.size() < 5) {
             return "LEITURA INCONCLUSIVA\n"
-                + "Candles detectados: " + candles.size() + "\n"
-                + "São necessários pelo menos 22 candles reconhecidos para avaliar MA 9/21 e RSI.\n\n"
+                + "Possíveis candles encontrados: " + marks.size() + "\n"
+                + "A área do gráfico foi localizada, mas a detecção ainda precisa de calibração.\n\n"
                 + "SINAL: SEM ENTRADA.";
         }
 
-        int n = candles.size();
-        double[] closes = new double[n];
-        double[] typical = new double[n];
-        for (int i = 0; i < n; i++) {
-            closes[i] = candles.get(i).close;
-            typical[i] = candles.get(i).typical();
+        int greens = 0;
+        int reds = 0;
+        for (CandleMark mark : marks) {
+            if ("VERDE".equals(mark.color())) greens++;
+            else reds++;
         }
+        CandleMark last = marks.get(marks.size() - 1);
 
-        double ma9 = average(closes, n - 9, n);
-        double ma21 = average(closes, n - 21, n);
-        double rsi = rsi(closes, 14);
-        double cci = cci(typical, 20);
-        Candle last = candles.get(n - 1);
-
-        String trend = ma9 < ma21 ? "ALTA (estimada)" : ma9 > ma21 ? "BAIXA (estimada)" : "LATERAL";
-        // Coordenadas verticais crescem para baixo: a escala de preço é invertida.
-        // Por isso a relação das médias é apresentada como leitura experimental.
-        return "ANÁLISE EXPERIMENTAL DO GRÁFICO\n"
-            + "Candles reconhecidos: " + n + "\n"
-            + "MA 9 (pixel): " + fmt(ma9) + "\n"
-            + "MA 21 (pixel): " + fmt(ma21) + "\n"
-            + "RSI 14 estimado: " + fmt(rsi) + "\n"
-            + "CCI 20 estimado: " + fmt(cci) + "\n"
-            + "Último candle: " + (last.green ? "VERDE" : "VERMELHO") + "\n"
-            + "Relação das médias: " + trend + "\n\n"
+        return "LEITURA VISUAL EXPERIMENTAL\n"
+            + "Possíveis candles encontrados: " + marks.size() + "\n"
+            + "Predominância verde: " + greens + "\n"
+            + "Predominância vermelha: " + reds + "\n"
+            + "Último elemento detectado: " + last.color() + "\n"
+            + "Posição horizontal: " + last.firstX + "–" + last.lastX + " px\n\n"
             + "SINAL: SEM ENTRADA.\n"
-            + "A leitura ainda usa posições em pixels, não preços OHLC reais. "
-            + "É necessário validar a detecção e a escala do gráfico em várias capturas antes de usar os indicadores para operações.";
-    }
-
-    private static double average(double[] values, int from, int to) {
-        double sum = 0;
-        for (int i = from; i < to; i++) sum += values[i];
-        return sum / (to - from);
-    }
-
-    private static double rsi(double[] values, int period) {
-        double gains = 0, losses = 0;
-        for (int i = values.length - period; i < values.length; i++) {
-            double change = values[i] - values[i - 1];
-            if (change > 0) gains += change;
-            else losses -= change;
-        }
-        if (losses == 0) return 100.0;
-        double rs = (gains / period) / (losses / period);
-        return 100.0 - (100.0 / (1.0 + rs));
-    }
-
-    private static double cci(double[] values, int period) {
-        int from = values.length - period;
-        double mean = average(values, from, values.length);
-        double deviation = 0;
-        for (int i = from; i < values.length; i++) deviation += Math.abs(values[i] - mean);
-        deviation /= period;
-        if (deviation == 0) return 0;
-        return (values[values.length - 1] - mean) / (0.015 * deviation);
-    }
-
-    private static String fmt(double value) {
-        return String.format(Locale.US, "%.1f", value);
+            + "Esta etapa identifica regiões coloridas, não preços de abertura, máxima, mínima e fechamento. "
+            + "RSI, CCI e MA 9/21 ainda não são confiáveis nesta captura. "
+            + "A leitura será calibrada antes de liberar qualquer sinal.";
     }
 
     private static String inconclusive(String reason) {
