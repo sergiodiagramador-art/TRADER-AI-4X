@@ -35,7 +35,7 @@ public final class ScreenshotAnalyzer {
         }
 
         int w = bitmap.getWidth(), h = bitmap.getHeight();
-        int left = (int) (w * 0.12);
+        int left = (int) (w * 0.07);
         int right = (int) (w * 0.84);
         int scanTop = (int) (h * 0.04);
         int scanBottom = (int) (h * 0.96);
