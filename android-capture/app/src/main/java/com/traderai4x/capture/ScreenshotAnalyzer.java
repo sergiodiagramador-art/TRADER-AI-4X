@@ -3,21 +3,30 @@ package com.traderai4x.capture;
 import android.graphics.Bitmap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
- * Detector visual experimental para capturas completas ou recortadas da BullX.
- * Identifica faixas de pixels coloridos; não extrai OHLC real e não emite sinais.
+ * Leitura visual experimental da BullX.
+ * OHLC aqui é expresso somente em coordenadas de pixels, nunca em preço.
+ * Não produz sinais operacionais.
  */
 public final class ScreenshotAnalyzer {
     private ScreenshotAnalyzer() {}
 
     private static final class CandleMark {
-        final int firstX, lastX, topY, bottomY, green, red;
-        CandleMark(int firstX, int lastX, int topY, int bottomY, int green, int red) {
-            this.firstX = firstX; this.lastX = lastX; this.topY = topY;
-            this.bottomY = bottomY; this.green = green; this.red = red;
+        final int firstX, lastX, highY, lowY, bodyTop, bodyBottom;
+        final int greenPixels, redPixels;
+        CandleMark(int firstX, int lastX, int highY, int lowY,
+                   int bodyTop, int bodyBottom, int greenPixels, int redPixels) {
+            this.firstX = firstX; this.lastX = lastX;
+            this.highY = highY; this.lowY = lowY;
+            this.bodyTop = bodyTop; this.bodyBottom = bodyBottom;
+            this.greenPixels = greenPixels; this.redPixels = redPixels;
         }
-        String color() { return green >= red ? "VERDE" : "VERMELHO"; }
+        boolean isGreen() { return greenPixels >= redPixels; }
+        String color() { return isGreen() ? "VERDE" : "VERMELHO"; }
+        int openPixel() { return isGreen() ? bodyBottom : bodyTop; }
+        int closePixel() { return isGreen() ? bodyTop : bodyBottom; }
     }
 
     public static String analyze(Bitmap bitmap) {
@@ -33,7 +42,7 @@ public final class ScreenshotAnalyzer {
         int width = right - left;
         int[] rowHits = new int[scanBottom - scanTop];
 
-        // Localiza automaticamente o gráfico em captura integral ou recortada.
+        // Procura a faixa vertical com maior concentração contínua de pixels de candle.
         for (int y = scanTop; y < scanBottom; y++) {
             int hits = 0;
             for (int x = left; x < right; x++) {
@@ -62,7 +71,7 @@ public final class ScreenshotAnalyzer {
             bestScore = runScore; bestStart = runStart; bestEnd = lastActive;
         }
         if (bestStart < 0 || bestEnd - bestStart < 25) {
-            return inconclusive("Não foi possível localizar uma área contínua de candles coloridos.");
+            return inconclusive("Não foi possível localizar a área do gráfico.");
         }
 
         int pad = Math.max(6, (bestEnd - bestStart) / 12);
@@ -93,7 +102,7 @@ public final class ScreenshotAnalyzer {
             }
         }
 
-        List<CandleMark> marks = new ArrayList<>();
+        List<CandleMark> candles = new ArrayList<>();
         int x = 0;
         while (x < width) {
             if (green[x] + red[x] < 2) { x++; continue; }
@@ -107,47 +116,72 @@ public final class ScreenshotAnalyzer {
                 } else break;
             }
 
-            int gp = 0, rp = 0, candleTop = Integer.MAX_VALUE, candleBottom = -1;
+            int gp = 0, rp = 0, highY = Integer.MAX_VALUE, lowY = -1;
             for (int col = start; col <= end; col++) {
                 gp += green[col]; rp += red[col];
                 if (green[col] + red[col] > 0) {
-                    candleTop = Math.min(candleTop, minY[col]);
-                    candleBottom = Math.max(candleBottom, maxY[col]);
+                    highY = Math.min(highY, minY[col]);
+                    lowY = Math.max(lowY, maxY[col]);
                 }
             }
-            int candleHeight = candleBottom - candleTop;
-            // Remove linhas verticais da interface (ex.: linha pontilhada de expiração),
-            // que atravessam quase toda a área do gráfico e não são candles.
-            if (gp + rp >= 4 && candleHeight > 1 && candleHeight <= chartHeight * 0.65
-                    && end - start <= 18) {
-                marks.add(new CandleMark(left + start, left + end,
-                    candleTop, candleBottom, gp, rp));
+
+            // Corpo: linhas horizontais com pelo menos 2 pixels coloridos
+            // contíguos na largura do candidato; pixels isolados formam pavios.
+            int bodyTop = Integer.MAX_VALUE, bodyBottom = -1;
+            for (int y = highY; y <= lowY; y++) {
+                int rowCount = 0;
+                for (int col = start; col <= end; col++) {
+                    int c = bitmap.getPixel(left + col, y);
+                    if (isCandleColor(c)) rowCount++;
+                }
+                if (rowCount >= 2) {
+                    bodyTop = Math.min(bodyTop, y);
+                    bodyBottom = Math.max(bodyBottom, y);
+                }
+            }
+
+            int candleHeight = lowY - highY;
+            boolean plausible = gp + rp >= 4 && candleHeight > 2
+                && candleHeight <= chartHeight * 0.65 && end - start <= 18
+                && bodyBottom >= bodyTop && bodyBottom - bodyTop >= 1;
+            if (plausible) {
+                candles.add(new CandleMark(left + start, left + end, highY, lowY,
+                    bodyTop, bodyBottom, gp, rp));
             }
             x = Math.max(x + 1, end + 1);
         }
 
-        if (marks.size() < 5) {
+        if (candles.size() < 5) {
             return "LEITURA INCONCLUSIVA\n"
-                + "Área do gráfico localizada: Y=" + top + "–" + bottom + " px\n"
-                + "Possíveis candles separados: " + marks.size() + "\n"
-                + "Ajuste visual ainda necessário.\n\nSINAL: SEM ENTRADA.";
+                + "Área do gráfico: Y=" + top + "–" + bottom + " px\n"
+                + "Candidatos com corpo identificado: " + candles.size()
+                + "\nAjuste visual necessário.\n\nSINAL: SEM ENTRADA.";
         }
 
         int greens = 0, reds = 0;
-        for (CandleMark mark : marks) {
-            if ("VERDE".equals(mark.color())) greens++; else reds++;
+        for (CandleMark c : candles) {
+            if (c.isGreen()) greens++; else reds++;
         }
-        CandleMark last = marks.get(marks.size() - 1);
-        return "LEITURA VISUAL EXPERIMENTAL\n"
-            + "Região do gráfico: Y=" + top + "–" + bottom + " px\n"
-            + "Possíveis candles separados: " + marks.size() + "\n"
-            + "Predominância verde: " + greens + "\n"
-            + "Predominância vermelha: " + reds + "\n"
-            + "Último elemento detectado: " + last.color() + "\n\n"
-            + "SINAL: SEM ENTRADA.\n"
-            + "A detecção ainda trabalha com pixels, não com preços OHLC. "
-            + "RSI, CCI e MA 9/21 não devem ser calculados a partir desta estimativa. "
-            + "É necessário validar a separação dos candles em diferentes capturas.";
+
+        StringBuilder report = new StringBuilder();
+        report.append("LEITURA EXPERIMENTAL — COORDENADAS EM PIXELS\n");
+        report.append("Área do gráfico: Y=").append(top).append("–").append(bottom).append(" px\n");
+        report.append("Candidatos com corpo identificado: ").append(candles.size()).append("\n");
+        report.append("Verdes: ").append(greens).append(" | Vermelhos: ").append(reds).append("\n");
+        report.append("\nÚLTIMOS 5 CANDIDATOS (O/H/L/C em pixels)\n");
+
+        int from = Math.max(0, candles.size() - 5);
+        for (int i = from; i < candles.size(); i++) {
+            CandleMark c = candles.get(i);
+            report.append(String.format(Locale.US,
+                "%d. %s O:%d H:%d L:%d C:%d%n",
+                i + 1, c.color(), c.openPixel(), c.highY, c.lowY, c.closePixel()));
+        }
+        report.append("\nSINAL: SEM ENTRADA.\n");
+        report.append("Os valores O/H/L/C acima são posições de pixels, não cotações. ");
+        report.append("A escala de preço e o tempo de cada candle ainda não foram calibrados. ");
+        report.append("RSI, CCI, MA9 e MA21 não devem ser calculados até essa validação.");
+        return report.toString();
     }
 
     private static boolean isCandleColor(int color) {
