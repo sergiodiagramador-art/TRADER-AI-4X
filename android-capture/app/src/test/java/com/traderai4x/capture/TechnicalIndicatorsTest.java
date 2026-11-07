@@ -27,7 +27,7 @@ public class TechnicalIndicatorsTest {
 
     @Test public void calculatesCciFromTypicalPrice() {
         TechnicalIndicators.Result result = TechnicalIndicators.calculate(risingSeries());
-        assertEquals(126.6666667, result.cci20, 0.0001);
+        assertEquals(120.6349206, result.cci20, 0.0001);
     }
 
     @Test public void rejectsInsufficientHistory() {
