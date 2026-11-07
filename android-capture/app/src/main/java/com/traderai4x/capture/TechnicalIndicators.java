@@ -62,15 +62,14 @@ public final class TechnicalIndicators {
 
     /** RSI de Wilder com suavização recursiva. */
     private static double rsiWilder(Candle[] c, int period) {
-        int first = c.length - period - 1;
         double gains = 0.0, losses = 0.0;
-        for (int i = first + 1; i <= first + period; i++) {
+        for (int i = 1; i <= period; i++) {
             double change = c[i].close - c[i - 1].close;
             if (change > 0) gains += change;
             else losses -= change;
         }
         double avgGain = gains / period, avgLoss = losses / period;
-        for (int i = first + period + 1; i < c.length; i++) {
+        for (int i = period + 1; i < c.length; i++) {
             double change = c[i].close - c[i - 1].close;
             avgGain = (avgGain * (period - 1) + Math.max(change, 0.0)) / period;
             avgLoss = (avgLoss * (period - 1) + Math.max(-change, 0.0)) / period;
