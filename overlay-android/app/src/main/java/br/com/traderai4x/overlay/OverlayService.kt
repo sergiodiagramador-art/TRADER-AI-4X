@@ -1,6 +1,10 @@
 package br.com.traderai4x.overlay
 
 import android.app.Service
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
@@ -26,8 +30,29 @@ class OverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        startOverlayForeground()
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         buildPanel()
+    }
+
+    private fun startOverlayForeground() {
+        val channelId = "trader_overlay"
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.createNotificationChannel(NotificationChannel(channelId, "Painel TRADER AI 4X", NotificationManager.IMPORTANCE_LOW))
+        }
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, channelId)
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(this)
+        }
+        val notification = builder.setContentTitle("TRADER AI 4X ativo")
+            .setContentText("Painel flutuante disponível sobre o Bullex")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setOngoing(true)
+            .build()
+        startForeground(41, notification)
     }
     private fun buildPanel() {
         val box = LinearLayout(this).apply {
