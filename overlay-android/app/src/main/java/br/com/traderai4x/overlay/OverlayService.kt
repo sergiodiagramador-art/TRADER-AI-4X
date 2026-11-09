@@ -10,6 +10,11 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import org.json.JSONArray
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class OverlayService : Service() {
     private lateinit var wm: WindowManager
@@ -34,9 +39,20 @@ class OverlayService : Service() {
         meta = TextView(this).apply { text = "Abra a análise no TRADER AI 4X"; textSize = 12f; setTextColor(Color.LTGRAY) }
         status = TextView(this).apply { text = "Entrada não registrada"; textSize = 11f; setTextColor(Color.YELLOW) }
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        actions.addView(Button(this).apply { text = "ENTREI"; setOnClickListener { status.text = "Entrada registrada · aguardando resultado"; status.setTextColor(Color.GREEN) } }, LinearLayout.LayoutParams(0, -2, 1f))
-        actions.addView(Button(this).apply { text = "NÃO ENTREI"; setOnClickListener { status.text = "Sinal ignorado"; status.setTextColor(Color.LTGRAY) } }, LinearLayout.LayoutParams(0, -2, 1f))
-        box.addView(signal); box.addView(meta); box.addView(status); box.addView(actions)
+        actions.addView(Button(this).apply { text = "ENTREI"; setOnClickListener {
+            status.text = "Entrada registrada · aguardando resultado"; status.setTextColor(Color.GREEN); saveEvent("ENTREI")
+        } }, LinearLayout.LayoutParams(0, -2, 1f))
+        actions.addView(Button(this).apply { text = "NÃO ENTREI"; setOnClickListener {
+            status.text = "Sinal ignorado"; status.setTextColor(Color.LTGRAY); saveEvent("NÃO_ENTREI")
+        } }, LinearLayout.LayoutParams(0, -2, 1f))
+        val outcomes = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        outcomes.addView(Button(this).apply { text = "WIN"; setOnClickListener {
+            status.text = "Resultado registrado: WIN"; status.setTextColor(Color.GREEN); saveEvent("WIN")
+        } }, LinearLayout.LayoutParams(0, -2, 1f))
+        outcomes.addView(Button(this).apply { text = "LOSS"; setOnClickListener {
+            status.text = "Resultado registrado: LOSS"; status.setTextColor(Color.RED); saveEvent("LOSS")
+        } }, LinearLayout.LayoutParams(0, -2, 1f))
+        box.addView(signal); box.addView(meta); box.addView(status); box.addView(actions); box.addView(outcomes)
         val p = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -57,7 +73,18 @@ class OverlayService : Service() {
         panel = box; params = p
         try { wm.addView(box, p) } catch (_: Exception) { stopSelf() }
     }
-    override fun onDestroy() { panel?.let { try { wm.removeView(it) } catch (_: Exception) {} }; panel=null; super.onDestroy() }
+    private fun saveEvent(event: String) {
+        val prefs = getSharedPreferences("trader_overlay_history", MODE_PRIVATE)
+        val history = try { JSONArray(prefs.getString("events", "[]")) } catch (_: Exception) { JSONArray() }
+        val row = JSONObject()
+        row.put("event", event)
+        row.put("signal", signal.text.toString())
+        row.put("detail", meta.text.toString())
+        row.put("timestamp", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date()))
+        history.put(row)
+        prefs.edit().putString("events", history.toString()).apply()
+    }
+    override fun onDestroy() { instance = null; panel?.let { try { wm.removeView(it) } catch (_: Exception) {} }; panel=null; super.onDestroy() }
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
