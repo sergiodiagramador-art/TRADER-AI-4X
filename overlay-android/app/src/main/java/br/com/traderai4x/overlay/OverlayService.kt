@@ -79,8 +79,11 @@ class OverlayService : Service() {
         } }, LinearLayout.LayoutParams(0, -2, 1f))
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         val collapse = Button(this).apply { text = "−"; textSize = 14f; minWidth = 42; setPadding(4, 0, 4, 0) }
+        val close = Button(this).apply { text = "×"; textSize = 14f; minWidth = 42; setPadding(4, 0, 4, 0) }
         header.addView(signal, LinearLayout.LayoutParams(0, -2, 1f))
         header.addView(collapse, LinearLayout.LayoutParams(-2, -2))
+        header.addView(close, LinearLayout.LayoutParams(-2, -2))
+        close.setOnClickListener { stopSelf() }
         val controls = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         controls.addView(meta); controls.addView(status); controls.addView(actions); controls.addView(outcomes)
         collapse.setOnClickListener {
