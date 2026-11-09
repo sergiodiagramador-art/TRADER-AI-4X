@@ -43,12 +43,13 @@ class OverlayService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply { gravity = Gravity.TOP or Gravity.END; x = 12; y = 140 }
-        box.setOnTouchListener(object : android.view.View.OnTouchListener {
+        signal.setOnTouchListener(object : android.view.View.OnTouchListener {
             private var sx = 0f; private var sy = 0f; private var ox = 0; private var oy = 0
             override fun onTouch(v: android.view.View, e: android.view.MotionEvent): Boolean {
                 when (e.action) {
                     android.view.MotionEvent.ACTION_DOWN -> { sx=e.rawX; sy=e.rawY; ox=p.x; oy=p.y; return true }
                     android.view.MotionEvent.ACTION_MOVE -> { p.x=ox+(sx-e.rawX).toInt(); p.y=oy+(e.rawY-sy).toInt(); wm.updateViewLayout(box,p); return true }
+                    android.view.MotionEvent.ACTION_UP -> return true
                 }
                 return false
             }
