@@ -77,7 +77,18 @@ class OverlayService : Service() {
         outcomes.addView(Button(this).apply { text = "LOSS"; setOnClickListener {
             status.text = "Resultado registrado: LOSS"; status.setTextColor(Color.RED); saveEvent("LOSS")
         } }, LinearLayout.LayoutParams(0, -2, 1f))
-        box.addView(signal); box.addView(meta); box.addView(status); box.addView(actions); box.addView(outcomes)
+        val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        val collapse = Button(this).apply { text = "−"; textSize = 14f; minWidth = 42; setPadding(4, 0, 4, 0) }
+        header.addView(signal, LinearLayout.LayoutParams(0, -2, 1f))
+        header.addView(collapse, LinearLayout.LayoutParams(-2, -2))
+        val controls = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        controls.addView(meta); controls.addView(status); controls.addView(actions); controls.addView(outcomes)
+        collapse.setOnClickListener {
+            val hidden = controls.visibility == android.view.View.GONE
+            controls.visibility = if (hidden) android.view.View.VISIBLE else android.view.View.GONE
+            collapse.text = if (hidden) "−" else "+"
+        }
+        box.addView(header); box.addView(controls)
         val p = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
