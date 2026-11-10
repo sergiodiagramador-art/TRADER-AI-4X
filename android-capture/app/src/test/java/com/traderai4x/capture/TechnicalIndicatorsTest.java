@@ -27,7 +27,9 @@ public class TechnicalIndicatorsTest {
 
     @Test public void calculatesCciFromTypicalPrice() {
         TechnicalIndicators.Result result = TechnicalIndicators.calculate(risingSeries());
-        assertEquals(120.6349206, result.cci20, 0.0001);
+        // Typical prices are 2..21: mean=11.5, mean deviation=5,
+        // so CCI=(21-11.5)/(0.015*5)=126.6666667.
+        assertEquals(126.6666667, result.cci20, 0.0001);
     }
 
     @Test public void rejectsInsufficientHistory() {
