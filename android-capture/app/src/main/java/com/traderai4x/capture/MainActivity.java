@@ -62,6 +62,11 @@ public class MainActivity extends Activity {
         refresh.setOnClickListener(v -> showLastCapture());
         layout.addView(refresh);
 
+        Button share = new Button(this);
+        share.setText("Enviar captura ao Overlay");
+        share.setOnClickListener(v -> shareLastCapture());
+        layout.addView(share);
+
         Button analyze = new Button(this);
         analyze.setText("Analisar última captura");
         analyze.setOnClickListener(v -> analyzeLastCapture());
@@ -146,6 +151,27 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         showLastCapture();
+    }
+
+    private void shareLastCapture() {
+        File base = getExternalFilesDir("captures");
+        File file = base == null ? null : new File(base, "last-capture.png");
+        if (file == null || !file.exists() || file.length() == 0) {
+            status.setText("Ainda não existe captura salva para enviar.");
+            return;
+        }
+        try {
+            Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                this, getPackageName() + ".fileprovider", file);
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("image/png");
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.setClipData(android.content.ClipData.newUri(getContentResolver(), "Captura Bullex", uri));
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(send, "Enviar captura para TRADER AI 4X Overlay"));
+        } catch (Exception e) {
+            status.setText("Não foi possível compartilhar a captura: " + e.getClass().getSimpleName());
+        }
     }
 
     private void analyzeLastCapture() {
