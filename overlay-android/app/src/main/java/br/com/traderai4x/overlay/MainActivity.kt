@@ -1,6 +1,7 @@
 package br.com.traderai4x.overlay
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.graphics.BitmapFactory
