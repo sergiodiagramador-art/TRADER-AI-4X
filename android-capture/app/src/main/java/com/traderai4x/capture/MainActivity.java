@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import androidx.core.content.FileProvider;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -66,6 +67,11 @@ public class MainActivity extends Activity {
         analyze.setText("Analisar última captura");
         analyze.setOnClickListener(v -> analyzeLastCapture());
         layout.addView(analyze);
+
+        Button share = new Button(this);
+        share.setText("Enviar captura para TRADER AI 4X");
+        share.setOnClickListener(v -> shareLastCapture());
+        layout.addView(share);
 
         Button stop = new Button(this);
         stop.setText("Parar captura");
@@ -146,6 +152,28 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         showLastCapture();
+    }
+
+    private void shareLastCapture() {
+        File base = getExternalFilesDir("captures");
+        File file = base == null ? null : new File(base, "last-capture.png");
+        if (file == null || !file.exists() || file.length() == 0) {
+            status.setText("Ainda não existe captura salva para enviar.");
+            return;
+        }
+        try {
+            Uri uri = FileProvider.getUriForFile(
+                this, "com.traderai4x.capture.fileprovider", file);
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("image/png");
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.setPackage("br.com.traderai4x.overlay");
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(send);
+            status.setText("Imagem enviada ao TRADER AI 4X Overlay. A leitura ainda será apenas visual; não gera sinal automático.");
+        } catch (Exception e) {
+            status.setText("Não foi possível enviar. Verifique se o TRADER AI 4X Overlay está instalado. Detalhe: " + e.getClass().getSimpleName());
+        }
     }
 
     private void analyzeLastCapture() {
